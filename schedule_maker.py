@@ -1,6 +1,6 @@
 import pandas as pd
 
-TOURNAMENT_SCHEDULE = {
+DEFAULT_SCHEDULE = {
     2: 'double rating points',
     3: 'high roller',
     4: 'deep classic',
@@ -8,12 +8,15 @@ TOURNAMENT_SCHEDULE = {
     6: 'triple shot'
 }
 
-def build_calendar(start_date, end_date):
+def build_calendar(start_date, end_date, overrides=None):
     dates = pd.date_range(start_date, end_date)
 
     schedule = []
 
     for d in dates:
-        if d.weekday() in TOURNAMENT_SCHEDULE:
-            schedule.append((d, TOURNAMENT_SCHEDULE[d.weekday()]))
+        if d.weekday() in DEFAULT_SCHEDULE:
+            t_type = DEFAULT_SCHEDULE[d.weekday()]
+            if overrides and d in overrides:
+                t_type = overrides[d]
+            schedule.append((d, t_type))
     return schedule
