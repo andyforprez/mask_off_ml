@@ -31,7 +31,7 @@ future_schedule = build_calendar(
     }
 )
 
-cutoff_history, player_history = run_simulations(df, model, future_schedule, n_sim=1000, noise_std=15, inactive_players=inactive_players)
+cutoff_history, player_history = run_simulations(df, model, future_schedule, n_sim=10, noise_std=15, inactive_players=inactive_players)
 expected_cutoff = compute_expected_cutoff(cutoff_history)
 expected_players = compute_expected_player_points(player_history)
 

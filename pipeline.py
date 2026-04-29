@@ -13,29 +13,37 @@ def simulate_one_run(df_hist, model, schedule, noise_std, inactive_players=None)
     df_sim = df_hist.copy()
 
     for date, t_type in schedule:
-        players = df_sim['player_id'].unique()
+        df_features = build_features(df_sim)
 
-        new_rows = pd.DataFrame({
-            'player_id': players,
-            'date': date,
-            'tournament_type': t_type,
-            'points': 0
-        })
+        df_latest = (
+            df_features.sort_values('date')
+            .groupby('player_id')
+            .tail(1)
+            .copy()
+        )
 
-        df_temp = pd.concat([df_sim, new_rows], ignore_index=True)
-        df_temp = build_features(df_temp)
+        df_latest['date'] = date
+        df_latest['tournament_type'] = t_type
 
-        df_new = df_temp[df_temp['date'] == date]
+        df_latest['points'] = 0
 
-        preds = predict_day(model, df_new, model.feature_names_, noise_std)
+        preds = predict_day(
+            model,
+            df_latest,
+            model.feature_names_,
+            noise_std
+        )
 
-        new_rows = new_rows.merge(preds, on='player_id')
-        new_rows['points'] = new_rows['predicted_points']
-        new_rows.drop(columns=['predicted_points'], inplace=True)
+        df_latest["points"] = preds["predicted_points"].values
 
-        new_rows = apply_inactive_players(new_rows, inactive_players)
+        if inactive_players:
+            df_latest.loc[
+                df_latest['player_id'].isin(inactive_players),
+                'points'
+            ] = 0
 
-        df_sim = pd.concat([df_sim, new_rows], ignore_index=True)
+        df_sim = pd.concat([df_sim, df_latest], ignore_index=True)
+
     return df_sim
 
 def run_simulations(df_hist, model, schedule, n_sim=1000, noise_std=10, inactive_players=None):
