@@ -135,8 +135,9 @@ def build_features(df):
     df = add_streak_features(df)
     df = add_tournament_skill_features(df)
 
+    EXCLUDE_COLS = ['player_id', 'tournament_type', 'date']
     for col in df.columns:
-        if df[col].dtype == 'object':
+        if col not in EXCLUDE_COLS and df[col].dtype == 'object':
             print(f'Fixing column: {col}')
             df[col] = pd.to_numeric(df[col], errors='coerce')
     df = df.fillna(0)

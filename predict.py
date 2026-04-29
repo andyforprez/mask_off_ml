@@ -14,6 +14,8 @@ def align_features(df, feature_cols):
 
 
 def predict_day(model, df_features, feature_cols=None, noise_std=None):
+    df_features = df_features.copy()
+
     if feature_cols is None:
         feature_cols = model.feature_names_
 
@@ -24,6 +26,6 @@ def predict_day(model, df_features, feature_cols=None, noise_std=None):
     if noise_std:
         preds += np.random.normal(0, noise_std, size=len(preds))
 
-    df_features['predicted_points'] = np.maximum(preds, 0)
+    df_features.loc[:, 'predicted_points'] = np.maximum(preds, 0)
 
     return df_features[['player_id', 'predicted_points']]
