@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>April Poker Season #3 — ML Playoff Odds</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #111318;
+    --surface:   #181b22;
+    --surface2:  #1e2129;
+    --border:    #2a2d38;
+    --accent:    #3b82f6;
+    --green-full: #22c55e;
+    --green-light: #4ade80;
+    --yellow:    #eab308;
+    --orange:    #f97316;
+    --red:       #ef4444;
+    --grey:      #5a5f72;
+    --text:      #e2e4ed;
+    --muted:     #5a5f72;
+    --muted2:    #3a3f52;
+    --ml-accent: #a78bfa;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    max-width: 560px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #1a1050 0%, #0e0a30 40%, #0a0c18 100%);
+    padding: 24px 20px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg, transparent, transparent 20px,
+      rgba(167,139,250,0.03) 20px, rgba(167,139,250,0.03) 40px
+    );
+    pointer-events: none;
+  }
+
+  .hero-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .hero h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .badge-active {
+    background: var(--accent);
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-ml {
+    background: rgba(167,139,250,0.18);
+    color: var(--ml-accent);
+    border: 1px solid rgba(167,139,250,0.35);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.8px;
+  }
+
+  .hero-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-cell {
+    padding: 14px 18px;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .stat-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+
+  .stat-value.small {
+    font-size: 14px;
+    color: var(--text);
+    margin-top: 3px;
+  }
+
+  .stat-value.ml {
+    font-size: 13px;
+    color: var(--ml-accent);
+    margin-top: 3px;
+  }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .search-inner { position: relative; }
+
+  .search-inner input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px 8px 32px;
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-inner input::placeholder { color: var(--muted); }
+  .search-inner input:focus { border-color: var(--ml-accent); }
+
+  .search-inner svg {
+    position: absolute;
+    left: 9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  /* ── COL HEADERS ── */
+  .col-header {
+    display: grid;
+    grid-template-columns: 48px 1fr 88px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .col-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .col-label.r { text-align: right; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── PLAYER LIST ── */
+  .player-list { background: var(--surface); }
+
+  .player-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 88px;
+    align-items: center;
+    padding: 0 16px;
+    height: 54px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    transition: background 0.1s;
+    cursor: default;
+    animation: rowIn 0.22s ease both;
+  }
+
+  .player-row:hover { background: var(--surface2); }
+
+  .player-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .player-row:hover::before { opacity: 1; }
+  .player-row.zg-full::before  { background: var(--green-full); }
+  .player-row.zg-light::before { background: var(--green-light); }
+  .player-row.zy::before       { background: var(--yellow); }
+  .player-row.zo::before       { background: var(--orange); }
+  .player-row.zr::before       { background: var(--red); }
+  .player-row.zx::before       { background: var(--grey); }
+
+  /* rank badge */
+  .rank-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rk1      { background: linear-gradient(135deg,#c9972a,#7a5510); color:#fff; }
+  .rk2      { background: linear-gradient(135deg,#8090a8,#505870); color:#fff; }
+  .rk3      { background: linear-gradient(135deg,#b06040,#703020); color:#fff; }
+  .rk-gfull  { background: rgba(34,197,94,0.15);  color: var(--green-full); }
+  .rk-glight { background: rgba(74,222,128,0.12); color: var(--green-light); }
+  .rk-yellow { background: rgba(234,179,8,0.15);  color: var(--yellow); }
+  .rk-orange { background: rgba(249,115,22,0.15); color: var(--orange); }
+  .rk-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+  .rk-grey   { background: var(--surface2);       color: var(--grey); }
+
+  /* name + ml confidence pip */
+  .name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .player-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-row.zg-full  .player-name,
+  .player-row.zg-light .player-name { color: #fff; }
+
+  /* tiny ML confidence dot */
+  .ml-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    opacity: 0.6;
+  }
+
+  /* probability */
+  .prob-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+
+  .prob-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .bar-track {
+    width: 68px;
+    height: 3px;
+    background: var(--muted2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ── CUTOFF DIVIDER ── */
+  .cutoff-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    height: 30px;
+    background: rgba(34,197,94,0.05);
+    border-top: 1px dashed rgba(34,197,94,0.25);
+    border-bottom: 1px dashed rgba(34,197,94,0.25);
+  }
+
+  .cutoff-divider span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--green-full);
+    white-space: nowrap;
+  }
+
+  .cutoff-divider::before,
+  .cutoff-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(34,197,94,0.15);
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── ML FOOTNOTE ── */
+  .footnote {
+    padding: 10px 16px 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── STATES ── */
+  .state-msg {
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    line-height: 1.8;
+  }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateX(-5px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <h1>April Poker Season #3</h1>
+    <div class="badges">
+      <div class="badge-active">ACTIVE</div>
+      <div class="badge-ml">ML MODEL</div>
+    </div>
+  </div>
+  <div class="hero-sub">ML Playoff Odds &nbsp;·&nbsp; Monte Carlo Simulation</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-cell">
+    <div class="stat-label">Player Pool</div>
+    <div class="stat-value" id="statPlayers">—</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-label">Playoff Spots</div>
+    <div class="stat-value">18</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-label">Model</div>
+    <div class="stat-value ml">GBR</div>
+  </div>
+</div>
+
+<div class="search-bar">
+  <div class="search-inner">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input id="searchInput" type="text" placeholder="Search player…">
+  </div>
+</div>
+
+<div class="col-header">
+  <div class="col-label">#</div>
+  <div class="col-label">Player</div>
+  <div class="col-label r">Top 18</div>
+</div>
+
+<div class="section-label">Ranked by ML-simulated playoff probability</div>
+
+<div class="player-list" id="playerList">
+  <div class="state-msg">Loading…</div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:var(--green-full)"></div>Guaranteed</div>
+  <div class="legend-item"><div class="dot" style="background:var(--green-light)"></div>Likely</div>
+  <div class="legend-item"><div class="dot" style="background:var(--yellow)"></div>Bubble</div>
+  <div class="legend-item"><div class="dot" style="background:var(--orange)"></div>Possible</div>
+  <div class="legend-item"><div class="dot" style="background:var(--red)"></div>Longshot</div>
+  <div class="legend-item"><div class="dot" style="background:var(--grey)"></div>Eliminated</div>
+</div>
+
+<div class="footnote">
+  Odds generated via GradientBoostingRegressor + Monte Carlo simulation (500 runs).
+  Player feature snapshots computed once; per-simulation noise applied at prediction time.
+</div>
+
+<script>
+const PLAYOFF_ODDS_CSV     = 'data/playoff_odds.csv';
+const EXPECTED_RANKING_TXT = 'data/expected_final_ranking.txt';
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  return lines.slice(1).map(line => {
+    // handle commas inside quoted fields just in case
+    const cols = line.split(',');
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = (cols[i] || '').trim());
+    return obj;
+  });
+}
+
+function parseExpectedRanking(text) {
+  const result = {};
+  for (const line of text.split('\n')) {
+    const m = line.match(/^\s*(\d+)\.\s+(.+?)\s+-\s+avg rank:\s+([\d.]+)/);
+    if (m) result[m[2].trim()] = { listRank: parseInt(m[1]), avgRank: parseFloat(m[3]) };
+  }
+  return result;
+}
+
+function zoneAndColor(p) {
+  if (p >= 0.9995) return { zone: 'g-full',  color: 'var(--green-full)' };
+  if (p >= 0.80)   return { zone: 'g-light', color: 'var(--green-light)' };
+  if (p >= 0.50)   return { zone: 'y',       color: 'var(--yellow)' };
+  if (p >= 0.20)   return { zone: 'o',       color: 'var(--orange)' };
+  if (p >  0.0)    return { zone: 'r',       color: 'var(--red)' };
+  return                   { zone: 'x',       color: 'var(--grey)' };
+}
+
+function badgeClass(rank, zoneCode) {
+  if (rank === 1) return 'rk1';
+  if (rank === 2) return 'rk2';
+  if (rank === 3) return 'rk3';
+  return { 'g-full':'rk-gfull','g-light':'rk-glight','y':'rk-yellow',
+           'o':'rk-orange','r':'rk-red','x':'rk-grey' }[zoneCode] || 'rk-grey';
+}
+
+// ML confidence: colour of the tiny dot based on how far avg rank is from display rank
+function mlDotColor(avgRank, displayRank) {
+  if (avgRank === null) return 'var(--muted)';
+  const delta = Math.abs(avgRank - displayRank);
+  if (delta < 1.5) return 'var(--green-full)';
+  if (delta < 3)   return 'var(--yellow)';
+  return 'var(--orange)';
+}
+
+let allPlayers = [];
+
+function render(players) {
+  const list = document.getElementById('playerList');
+  if (!players.length) {
+    list.innerHTML = `<div class="state-msg">No players found.</div>`;
+    return;
+  }
+
+  let html = '';
+  let cutoffInserted = false;
+
+  players.forEach((p, i) => {
+    const { zone: zoneCode, color } = zoneAndColor(p.top18Prob);
+    const barW    = Math.round(p.top18Prob * 100);
+    const probStr = (p.top18Prob * 100) >= 99.95
+      ? '100%'
+      : (p.top18Prob * 100).toFixed(1) + '%';
+    const delay = Math.min(i * 18, 300);
+    const bc    = badgeClass(p.displayRank, zoneCode);
+    const dotC  = mlDotColor(p.avgRank, p.displayRank);
+
+    if (!cutoffInserted && p.displayRank > 18) {
+      html += `<div class="cutoff-divider"><span>── Playoff cutoff ──</span></div>`;
+      cutoffInserted = true;
+    }
+
+    html += `
+      <div class="player-row z${zoneCode}" style="animation-delay:${delay}ms">
+        <div><div class="rank-badge ${bc}">${p.displayRank}</div></div>
+        <div class="name-row">
+          <span class="player-name">${p.player}</span>
+          <span class="ml-dot" style="background:${dotC}" title="ML avg rank: ${p.avgRank !== null ? p.avgRank.toFixed(1) : 'n/a'}"></span>
+        </div>
+        <div class="prob-col">
+          <span class="prob-pct" style="color:${color}">${probStr}</span>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${barW}%;background:${color}"></div>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+document.getElementById('searchInput').addEventListener('input', function () {
+  const q = this.value.toLowerCase().trim();
+  render(q ? allPlayers.filter(p => p.player.toLowerCase().includes(q)) : allPlayers);
+});
+
+async function loadData() {
+  try {
+    const [csvText, rankText] = await Promise.all([
+      fetch(PLAYOFF_ODDS_CSV).then(r => {
+        if (!r.ok) throw new Error('playoff_odds.csv not found');
+        return r.text();
+      }),
+      fetch(EXPECTED_RANKING_TXT).then(r => {
+        if (!r.ok) throw new Error('expected_final_ranking.txt not found');
+        return r.text();
+      }),
+    ]);
+
+    const csvRows  = parseCSV(csvText);
+    const expRanks = parseExpectedRanking(rankText);
+
+    // The first column header in the CSV is 'player_id'
+    const players = csvRows.map(row => {
+      const player  = row['player_id'] || row[Object.keys(row)[0]];
+      const top18Key = Object.keys(row).find(k => k.startsWith('Top'));
+      const top18   = parseFloat(row[top18Key] || '0');
+      const exp     = expRanks[player];
+      return {
+        player,
+        top18Prob: isNaN(top18) ? 0 : top18,
+        avgRank:   exp ? exp.avgRank : null,
+      };
+    }).filter(p => p.player);
+
+    // Sort: odds descending, then avg rank ascending as tiebreak
+    players.sort((a, b) => {
+      if (a.top18Prob !== b.top18Prob) return b.top18Prob - a.top18Prob;
+      if (a.avgRank !== null && b.avgRank !== null) return a.avgRank - b.avgRank;
+      if (a.avgRank !== null) return -1;
+      if (b.avgRank !== null) return  1;
+      return 0;
+    });
+
+    players.forEach((p, i) => p.displayRank = i + 1);
+    allPlayers = players;
+
+    document.getElementById('statPlayers').textContent = players.length;
+    render(allPlayers);
+
+  } catch (err) {
+    document.getElementById('playerList').innerHTML = `
+      <div class="state-msg">
+        Could not load data.<br><br>
+        Serve this folder via a local web server, e.g.:<br>
+        <code>python -m http.server 8000</code><br><br>
+        Expects:<br>
+        <code>data/playoff_odds.csv</code><br>
+        <code>data/expected_final_ranking.txt</code><br><br>
+        <small style="color:#333">${err.message}</small>
+      </div>`;
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
