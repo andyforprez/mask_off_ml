@@ -147,12 +147,6 @@
     margin-top: 3px;
   }
 
-  .stat-value.ml {
-    font-size: 13px;
-    color: var(--ml-accent);
-    margin-top: 3px;
-  }
-
   /* ── SEARCH ── */
   .search-bar {
     padding: 10px 14px;
@@ -278,14 +272,7 @@
   .rk-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
   .rk-grey   { background: var(--surface2);       color: var(--grey); }
 
-  /* name + ml confidence pip */
-  .name-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-  }
-
+  /* name */
   .player-name {
     font-size: 14px;
     font-weight: 500;
@@ -293,18 +280,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    padding-right: 6px;
   }
   .player-row.zg-full  .player-name,
   .player-row.zg-light .player-name { color: #fff; }
-
-  /* tiny ML confidence dot */
-  .ml-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    opacity: 0.6;
-  }
 
   /* probability */
   .prob-col {
@@ -390,16 +369,6 @@
     flex-shrink: 0;
   }
 
-  /* ── ML FOOTNOTE ── */
-  .footnote {
-    padding: 10px 16px 4px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    border-top: 1px solid var(--border);
-  }
-
   /* ── STATES ── */
   .state-msg {
     padding: 60px 20px;
@@ -439,8 +408,8 @@
     <div class="stat-value">18</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-label">Model</div>
-    <div class="stat-value ml">GBR</div>
+    <div class="stat-label">Last Game</div>
+    <div class="stat-value small" id="statLastDate">—</div>
   </div>
 </div>
 
@@ -474,20 +443,15 @@
   <div class="legend-item"><div class="dot" style="background:var(--grey)"></div>Eliminated</div>
 </div>
 
-<div class="footnote">
-  Odds generated via GradientBoostingRegressor + Monte Carlo simulation (500 runs).
-  Player feature snapshots computed once; per-simulation noise applied at prediction time.
-</div>
-
 <script>
 const PLAYOFF_ODDS_CSV     = 'data/playoff_odds.csv';
 const EXPECTED_RANKING_TXT = 'data/expected_final_ranking.txt';
+const RAW_DATA_CSV         = 'data/raw_data.csv';
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
   const headers = lines[0].split(',').map(h => h.trim());
   return lines.slice(1).map(line => {
-    // handle commas inside quoted fields just in case
     const cols = line.split(',');
     const obj = {};
     headers.forEach((h, i) => obj[h] = (cols[i] || '').trim());
@@ -502,6 +466,26 @@ function parseExpectedRanking(text) {
     if (m) result[m[2].trim()] = { listRank: parseInt(m[1]), avgRank: parseFloat(m[3]) };
   }
   return result;
+}
+
+function extractLastDate(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  const dateIdx = headers.indexOf('date');
+  if (dateIdx === -1) return null;
+  let maxDate = '';
+  for (let i = 1; i < lines.length; i++) {
+    const d = (lines[i].split(',')[dateIdx] || '').trim();
+    if (d > maxDate) maxDate = d;
+  }
+  return maxDate || null;
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-').map(Number);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${d} ${months[m - 1]} ${y}`;
 }
 
 function zoneAndColor(p) {
@@ -519,15 +503,6 @@ function badgeClass(rank, zoneCode) {
   if (rank === 3) return 'rk3';
   return { 'g-full':'rk-gfull','g-light':'rk-glight','y':'rk-yellow',
            'o':'rk-orange','r':'rk-red','x':'rk-grey' }[zoneCode] || 'rk-grey';
-}
-
-// ML confidence: colour of the tiny dot based on how far avg rank is from display rank
-function mlDotColor(avgRank, displayRank) {
-  if (avgRank === null) return 'var(--muted)';
-  const delta = Math.abs(avgRank - displayRank);
-  if (delta < 1.5) return 'var(--green-full)';
-  if (delta < 3)   return 'var(--yellow)';
-  return 'var(--orange)';
 }
 
 let allPlayers = [];
@@ -550,7 +525,6 @@ function render(players) {
       : (p.top18Prob * 100).toFixed(1) + '%';
     const delay = Math.min(i * 18, 300);
     const bc    = badgeClass(p.displayRank, zoneCode);
-    const dotC  = mlDotColor(p.avgRank, p.displayRank);
 
     if (!cutoffInserted && p.displayRank > 18) {
       html += `<div class="cutoff-divider"><span>── Playoff cutoff ──</span></div>`;
@@ -560,10 +534,7 @@ function render(players) {
     html += `
       <div class="player-row z${zoneCode}" style="animation-delay:${delay}ms">
         <div><div class="rank-badge ${bc}">${p.displayRank}</div></div>
-        <div class="name-row">
-          <span class="player-name">${p.player}</span>
-          <span class="ml-dot" style="background:${dotC}" title="ML avg rank: ${p.avgRank !== null ? p.avgRank.toFixed(1) : 'n/a'}"></span>
-        </div>
+        <div class="player-name">${p.player}</div>
         <div class="prob-col">
           <span class="prob-pct" style="color:${color}">${probStr}</span>
           <div class="bar-track">
@@ -583,26 +554,23 @@ document.getElementById('searchInput').addEventListener('input', function () {
 
 async function loadData() {
   try {
-    const [csvText, rankText] = await Promise.all([
-      fetch(PLAYOFF_ODDS_CSV).then(r => {
-        if (!r.ok) throw new Error('playoff_odds.csv not found');
-        return r.text();
-      }),
-      fetch(EXPECTED_RANKING_TXT).then(r => {
-        if (!r.ok) throw new Error('expected_final_ranking.txt not found');
-        return r.text();
-      }),
+    const [csvText, rankText, rawText] = await Promise.all([
+      fetch(PLAYOFF_ODDS_CSV).then(r     => { if (!r.ok) throw new Error('playoff_odds.csv not found'); return r.text(); }),
+      fetch(EXPECTED_RANKING_TXT).then(r => { if (!r.ok) throw new Error('expected_final_ranking.txt not found'); return r.text(); }),
+      fetch(RAW_DATA_CSV).then(r         => { if (!r.ok) throw new Error('raw_data.csv not found'); return r.text(); }),
     ]);
+
+    // Last game date
+    document.getElementById('statLastDate').textContent = formatDate(extractLastDate(rawText));
 
     const csvRows  = parseCSV(csvText);
     const expRanks = parseExpectedRanking(rankText);
 
-    // The first column header in the CSV is 'player_id'
     const players = csvRows.map(row => {
-      const player  = row['player_id'] || row[Object.keys(row)[0]];
+      const player   = row['player_id'] || row[Object.keys(row)[0]];
       const top18Key = Object.keys(row).find(k => k.startsWith('Top'));
-      const top18   = parseFloat(row[top18Key] || '0');
-      const exp     = expRanks[player];
+      const top18    = parseFloat(row[top18Key] || '0');
+      const exp      = expRanks[player];
       return {
         player,
         top18Prob: isNaN(top18) ? 0 : top18,
@@ -610,7 +578,7 @@ async function loadData() {
       };
     }).filter(p => p.player);
 
-    // Sort: odds descending, then avg rank ascending as tiebreak
+    // Sort: odds descending, avg rank ascending as tiebreak
     players.sort((a, b) => {
       if (a.top18Prob !== b.top18Prob) return b.top18Prob - a.top18Prob;
       if (a.avgRank !== null && b.avgRank !== null) return a.avgRank - b.avgRank;
@@ -633,7 +601,8 @@ async function loadData() {
         <code>python -m http.server 8000</code><br><br>
         Expects:<br>
         <code>data/playoff_odds.csv</code><br>
-        <code>data/expected_final_ranking.txt</code><br><br>
+        <code>data/expected_final_ranking.txt</code><br>
+        <code>data/raw_data.csv</code><br><br>
         <small style="color:#333">${err.message}</small>
       </div>`;
   }
