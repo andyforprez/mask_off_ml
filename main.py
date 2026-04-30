@@ -24,7 +24,7 @@ PLAYER_TO_TRACK  = 'Антуан Гризманн'
 INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'E_ishutkin', 'yakushevass']
 N_SIM            = 1000
 NOISE_STD        = 200     # higher spread → more realistic Monte Carlo variance
-EVAL_POOL        = 100
+EVAL_POOL        = 50
 TOP_N_RANK_PLOT  = 18
 # ─────────────────────────────────────────────────────────────────────────────
 
