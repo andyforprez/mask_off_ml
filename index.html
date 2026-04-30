@@ -400,7 +400,7 @@
 
 <div class="stats-row">
   <div class="stat-cell">
-    <div class="stat-label">Player Pool</div>
+    <div class="stat-label">Top Player Pool</div>
     <div class="stat-value" id="statPlayers">—</div>
   </div>
   <div class="stat-cell">
@@ -587,10 +587,14 @@ async function loadData() {
       return 0;
     });
 
-    players.forEach((p, i) => p.displayRank = i + 1);
-    allPlayers = players;
+    const LIMITED_POOL = 50; // match your eval_pool
 
-    document.getElementById('statPlayers').textContent = players.length;
+    const limitedPlayers = players.slice(0, LIMITED_POOL);
+
+    limitedPlayers.forEach((p, i) => p.displayRank = i + 1);
+    allPlayers = limitedPlayers;
+
+    document.getElementById('statPlayers').textContent = allPlayers.length;
     render(allPlayers);
 
   } catch (err) {
