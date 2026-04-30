@@ -21,9 +21,9 @@ from plots import (
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 PLAYER_TO_TRACK  = 'Антуан Гризманн'
-INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'E_ishutkin', 'yakushevass']
+INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'Комарик', 'E_ishutkin']
 N_SIM            = 1000
-NOISE_STD        = 200     # higher spread → more realistic Monte Carlo variance
+NOISE_STD        = 200
 EVAL_POOL        = 100
 TOP_N_RANK_PLOT  = 18
 # ─────────────────────────────────────────────────────────────────────────────
@@ -32,7 +32,6 @@ TOP_N_RANK_PLOT  = 18
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def get_actual_rank_path(df, player_id):
-    """Return list of {'date', 'rank'} using actual cumulative data."""
     df = df.copy()
     df['date'] = pd.to_datetime(df['date'])
     all_dates = sorted(df['date'].unique())

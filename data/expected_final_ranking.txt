@@ -1,103 +1,103 @@
 EXPECTED FINAL RANKING (FROM SIMULATION)
 ==================================================
 
-1. Roman_Furtatov - avg rank: 1.29
-2. Руслан - avg rank: 1.73
-3. Я ненавижу покер v.2 - avg rank: 2.98
-4. Гризли - avg rank: 4.23
-5. В азарт не входим - avg rank: 4.83
-6. дисциплина - avg rank: 6.51
-7. Антуан Гризманн - avg rank: 7.42
-8. Котяра - avg rank: 7.47
-9. Драйв - avg rank: 10.19
-10. E_ishutkin - avg rank: 10.57
-11. Бэндер - avg rank: 11.47
-12. clayzid - avg rank: 11.54
-13. ksuhony - avg rank: 12.36
+1. Roman_Furtatov - avg rank: 1.28
+2. Руслан - avg rank: 1.75
+3. Я ненавижу покер v.2 - avg rank: 2.97
+4. Гризли - avg rank: 4.25
+5. В азарт не входим - avg rank: 4.79
+6. дисциплина - avg rank: 6.64
+7. Антуан Гризманн - avg rank: 7.32
+8. Котяра - avg rank: 7.43
+9. Драйв - avg rank: 10.21
+10. E_ishutkin - avg rank: 10.45
+11. clayzid - avg rank: 11.46
+12. Бэндер - avg rank: 11.71
+13. ksuhony - avg rank: 12.33
 14. Кинзу - avg rank: 12.89
-15. ПокерНЕок - avg rank: 14.91
-16. Niko - avg rank: 16.84
-17. Obscur - avg rank: 17.88
-18. Kanti - avg rank: 18.17
-19. Добросердечный - avg rank: 18.26
-20. yakushevass - avg rank: 19.67
-21. Vitos2049 - avg rank: 20.62
+15. ПокерНЕок - avg rank: 15.15
+16. Niko - avg rank: 17.02
+17. yakushevass - avg rank: 17.50
+18. Obscur - avg rank: 18.37
+19. Kanti - avg rank: 18.57
+20. Добросердечный - avg rank: 18.74
+21. Vitos2049 - avg rank: 20.80
 22. Amaney - avg rank: 22.80
-23. Сокол - avg rank: 23.48
-24. sl1dbygad - avg rank: 23.57
-25. Mihmbox - avg rank: 23.67
-26. Пассажир - avg rank: 25.94
-27. Кальян - avg rank: 27.20
-28. finch79 - avg rank: 27.73
-29. Викусик - avg rank: 31.85
-30. Пиковая Дама - avg rank: 33.27
-31. cheremsha - avg rank: 33.58
-32. EliasPavlov - avg rank: 34.23
-33. Bushido - avg rank: 34.48
-34. Плейбой в карты - avg rank: 35.44
-35. Rik_dds - avg rank: 36.34
-36. Настя дай стек - avg rank: 36.58
-37. Yanchik_250 - avg rank: 37.28
-38. @TryFraiz - avg rank: 38.63
-39. nnnekk - avg rank: 38.90
-40. rusya6996 - avg rank: 40.36
-41. dama_pica - avg rank: 40.98
-42. averagemorningstarenjoyer - avg rank: 42.53
-43. SPQR - avg rank: 48.39
-44. Chinaski - avg rank: 48.46
-45. nesmotri_v_shelll1 - avg rank: 48.67
-46. Дядя Витя - avg rank: 49.16
-47. АРАМАИСКА - avg rank: 49.67
-48. Комарик - avg rank: 49.86
-49. dialse - avg rank: 50.31
-50. Тихоня - avg rank: 50.33
-51. Chesters - avg rank: 51.81
-52. MMM - avg rank: 51.94
-53. ArutunyanArsen - avg rank: 52.74
-54. gamma - avg rank: 53.02
-55. yankkk - avg rank: 53.50
-56. FISHer - avg rank: 54.16
-57. lavr - avg rank: 54.88
-58. ЛЕНИН - avg rank: 57.49
-59. Добряк - avg rank: 57.67
-60. Акоп - avg rank: 57.83
-61. Чейз - avg rank: 60.27
-62. maria_merlot - avg rank: 62.57
-63. Андрюха Пират - avg rank: 63.01
-64. бандэрос - avg rank: 64.24
-65. jieb - avg rank: 65.36
-66. kirienish - avg rank: 68.93
-67. egoist - avg rank: 69.66
-68. aisel_gizatova - avg rank: 70.26
-69. ЭтоМойНик - avg rank: 71.01
-70. Afteromanov - avg rank: 71.64
-71. Aronio - avg rank: 72.76
-72. Никитос - avg rank: 73.13
-73. long_2203 - avg rank: 76.21
-74. кинчоч - avg rank: 76.24
-75. Сан Саныч - avg rank: 77.65
-76. bogdansskii - avg rank: 78.35
-77. Serg - avg rank: 78.90
-78. Кесадилия - avg rank: 79.02
-79. Danila158 - avg rank: 80.47
-80. Staryii - avg rank: 80.69
-81. Shuricspinoza - avg rank: 81.00
-82. lilyokge - avg rank: 81.46
-83. sushk0v_aa - avg rank: 82.44
-84. ustayonmymind - avg rank: 82.80
-85. hachatur - avg rank: 83.36
-86. kykywka - avg rank: 83.83
-87. Al - avg rank: 84.09
-88. vovaa_25 - avg rank: 85.11
-89. Cordell - avg rank: 85.86
-90. Игорь - avg rank: 86.30
-91. Абеляр - avg rank: 86.36
-92. Отец Дмитрий - avg rank: 86.46
-93. Retbin - avg rank: 86.92
-94. maksim - avg rank: 87.45
-95. Yars - avg rank: 88.25
-96. desssai - avg rank: 88.29
-97. Gluckspilz8 - avg rank: 88.31
-98. kirp4712 - avg rank: 88.33
-99. DmitryParf - avg rank: 88.40
-100. mkrnnv - avg rank: 88.52
+23. sl1dbygad - avg rank: 23.45
+24. Сокол - avg rank: 23.60
+25. Mihmbox - avg rank: 23.88
+26. Пассажир - avg rank: 26.01
+27. Кальян - avg rank: 27.26
+28. finch79 - avg rank: 27.64
+29. Викусик - avg rank: 32.24
+30. Пиковая Дама - avg rank: 32.95
+31. EliasPavlov - avg rank: 33.90
+32. Bushido - avg rank: 34.07
+33. cheremsha - avg rank: 34.17
+34. Плейбой в карты - avg rank: 35.92
+35. Rik_dds - avg rank: 36.59
+36. Настя дай стек - avg rank: 36.95
+37. Yanchik_250 - avg rank: 37.30
+38. nnnekk - avg rank: 38.04
+39. @TryFraiz - avg rank: 39.99
+40. rusya6996 - avg rank: 40.08
+41. dama_pica - avg rank: 40.80
+42. averagemorningstarenjoyer - avg rank: 41.89
+43. SPQR - avg rank: 48.42
+44. Chinaski - avg rank: 48.79
+45. nesmotri_v_shelll1 - avg rank: 48.92
+46. Комарик - avg rank: 48.93
+47. Дядя Витя - avg rank: 49.35
+48. АРАМАИСКА - avg rank: 49.59
+49. Тихоня - avg rank: 49.81
+50. dialse - avg rank: 50.01
+51. MMM - avg rank: 51.45
+52. Chesters - avg rank: 51.77
+53. ArutunyanArsen - avg rank: 51.83
+54. yankkk - avg rank: 52.58
+55. gamma - avg rank: 52.87
+56. FISHer - avg rank: 53.79
+57. lavr - avg rank: 55.52
+58. Добряк - avg rank: 57.97
+59. ЛЕНИН - avg rank: 58.19
+60. Акоп - avg rank: 58.20
+61. Чейз - avg rank: 61.87
+62. maria_merlot - avg rank: 62.76
+63. бандэрос - avg rank: 63.79
+64. Андрюха Пират - avg rank: 64.46
+65. jieb - avg rank: 65.53
+66. kirienish - avg rank: 68.83
+67. egoist - avg rank: 69.15
+68. aisel_gizatova - avg rank: 69.34
+69. ЭтоМойНик - avg rank: 70.68
+70. Afteromanov - avg rank: 71.05
+71. Aronio - avg rank: 73.02
+72. Никитос - avg rank: 73.27
+73. кинчоч - avg rank: 75.63
+74. long_2203 - avg rank: 76.30
+75. Сан Саныч - avg rank: 77.36
+76. Serg - avg rank: 78.58
+77. Кесадилия - avg rank: 79.01
+78. Danila158 - avg rank: 79.50
+79. bogdansskii - avg rank: 79.71
+80. Staryii - avg rank: 80.65
+81. lilyokge - avg rank: 81.49
+82. ustayonmymind - avg rank: 81.94
+83. sushk0v_aa - avg rank: 82.09
+84. Shuricspinoza - avg rank: 82.16
+85. hachatur - avg rank: 83.70
+86. Al - avg rank: 83.85
+87. kykywka - avg rank: 84.00
+88. Cordell - avg rank: 85.30
+89. Игорь - avg rank: 85.95
+90. vovaa_25 - avg rank: 86.29
+91. Retbin - avg rank: 86.49
+92. maksim - avg rank: 86.70
+93. Отец Дмитрий - avg rank: 87.16
+94. Абеляр - avg rank: 87.27
+95. desssai - avg rank: 87.48
+96. DmitryParf - avg rank: 88.41
+97. mkrnnv - avg rank: 88.47
+98. xairullah - avg rank: 88.49
+99. stimylenok - avg rank: 88.65
+100. Владимир - avg rank: 88.83
