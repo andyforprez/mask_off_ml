@@ -21,7 +21,7 @@ from plots import (
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 PLAYER_TO_TRACK  = 'Антуан Гризманн'
-INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'Комарик', 'E_ishutkin']
+INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'Комарик']
 N_SIM            = 1000
 NOISE_STD        = 200
 EVAL_POOL        = 100
