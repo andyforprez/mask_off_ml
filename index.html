@@ -447,7 +447,6 @@
 const PLAYOFF_ODDS_CSV     = 'data/playoff_odds.csv';
 const EXPECTED_RANKING_TXT = 'data/expected_final_ranking.txt';
 const RAW_DATA_CSV         = 'data/raw_data.csv';
-const PLAYOFF_CUTOFF = 19;
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -464,7 +463,7 @@ function parseExpectedRanking(text) {
   const result = {};
   for (const line of text.split('\n')) {
     const m = line.match(/^\s*(\d+)\.\s+(.+?)\s+-\s+avg rank:\s+([\d.]+)/);
-    if (m) result[m[2].trim()] = { listRank: parseInt(m[1]), avgRank: parseFloat(m[3]) };
+    if (m) result[m[2].trim()] = { listRank: parseInt(m[1], 10), avgRank: parseFloat(m[3]) };
   }
   return result;
 }
@@ -502,11 +501,47 @@ function badgeClass(rank, zoneCode) {
   if (rank === 1) return 'rk1';
   if (rank === 2) return 'rk2';
   if (rank === 3) return 'rk3';
-  return { 'g-full':'rk-gfull','g-light':'rk-glight','y':'rk-yellow',
-           'o':'rk-orange','r':'rk-red','x':'rk-grey' }[zoneCode] || 'rk-grey';
+  return {
+    'g-full':'rk-gfull',
+    'g-light':'rk-glight',
+    'y':'rk-yellow',
+    'o':'rk-orange',
+    'r':'rk-red',
+    'x':'rk-grey'
+  }[zoneCode] || 'rk-grey';
+}
+
+function normalizeKey(k) {
+  return String(k || '').replace(/^\uFEFF/, '').trim();
+}
+
+function parseProbability(raw) {
+  if (raw === undefined || raw === null) return 0;
+  const s = String(raw).replace('%', '').trim();
+  const n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  return n > 1 ? n / 100 : n; // supports "73" -> 0.73
+}
+
+function findProbKey(row) {
+  const keys = Object.keys(row || {});
+  // Preferred patterns
+  const topKey = keys.find(k => /^Top\s+\d+\s+Prob$/i.test(normalizeKey(k)));
+  if (topKey) return topKey;
+
+  // Flexible fallback patterns
+  const fallback = keys.find(k => {
+    const nk = normalizeKey(k).toLowerCase().replace(/\s+/g, '_');
+    return nk === 'cutoff_prob' || nk === 'cutoffprob' || nk === 'playoff_prob' || nk === 'playoffprob';
+  });
+  if (fallback) return fallback;
+
+  // Last-resort generic
+  return keys.find(k => /prob/i.test(normalizeKey(k)));
 }
 
 let allPlayers = [];
+let playoffCutoff = 18;
 
 function render(players) {
   const list = document.getElementById('playerList');
@@ -519,15 +554,13 @@ function render(players) {
   let cutoffInserted = false;
 
   players.forEach((p, i) => {
-    const { zone: zoneCode, color } = zoneAndColor(p.top18Prob);
-    const barW    = Math.round(p.top18Prob * 100);
-    const probStr = (p.top18Prob * 100) >= 99.95
-      ? '100%'
-      : (p.top18Prob * 100).toFixed(1) + '%';
+    const { zone: zoneCode, color } = zoneAndColor(p.topProb);
+    const barW = Math.round(p.topProb * 100);
+    const probStr = (p.topProb * 100) >= 99.95 ? '100%' : (p.topProb * 100).toFixed(1) + '%';
     const delay = Math.min(i * 18, 300);
-    const bc    = badgeClass(p.displayRank, zoneCode);
+    const bc = badgeClass(p.displayRank, zoneCode);
 
-    if (!cutoffInserted && p.displayRank > PLAYOFF_CUTOFF) {
+    if (!cutoffInserted && p.displayRank > playoffCutoff) {
       html += `<div class="cutoff-divider"><span>── Playoff cutoff ──</span></div>`;
       cutoffInserted = true;
     }
@@ -556,40 +589,57 @@ document.getElementById('searchInput').addEventListener('input', function () {
 async function loadData() {
   try {
     const [csvText, rankText, rawText] = await Promise.all([
-      fetch(PLAYOFF_ODDS_CSV).then(r     => { if (!r.ok) throw new Error('playoff_odds.csv not found'); return r.text(); }),
+      fetch(PLAYOFF_ODDS_CSV).then(r => { if (!r.ok) throw new Error('playoff_odds.csv not found'); return r.text(); }),
       fetch(EXPECTED_RANKING_TXT).then(r => { if (!r.ok) throw new Error('expected_final_ranking.txt not found'); return r.text(); }),
-      fetch(RAW_DATA_CSV).then(r         => { if (!r.ok) throw new Error('raw_data.csv not found'); return r.text(); }),
+      fetch(RAW_DATA_CSV).then(r => { if (!r.ok) throw new Error('raw_data.csv not found'); return r.text(); }),
     ]);
 
     // Last game date
     document.getElementById('statLastDate').textContent = formatDate(extractLastDate(rawText));
 
-    const csvRows  = parseCSV(csvText);
+    const csvRows = parseCSV(csvText);
     const expRanks = parseExpectedRanking(rankText);
 
+    if (!csvRows.length) throw new Error('playoff_odds.csv has no rows');
+
+    // Detect probability column from first row
+    const probKey = findProbKey(csvRows[0]);
+    if (!probKey) throw new Error('No probability column found (expected Top N Prob or cutoff_prob)');
+
+    // Infer cutoff from header if possible (Top 19 Prob -> 19)
+    const normProbHeader = normalizeKey(probKey);
+    const cutoffMatch = normProbHeader.match(/Top\s+(\d+)\s+Prob/i);
+    playoffCutoff = cutoffMatch ? parseInt(cutoffMatch[1], 10) : 19; // fallback if using "cutoff_prob"
+
+    // Optional dynamic labels if these IDs exist in your HTML
+    const statCutoffEl = document.getElementById('statCutoff');
+    const topColLabelEl = document.getElementById('topColLabel');
+    if (statCutoffEl) statCutoffEl.textContent = playoffCutoff;
+    if (topColLabelEl) topColLabelEl.textContent = `Top ${playoffCutoff}`;
+
     const players = csvRows.map(row => {
-      const player   = row['player_id'] || row[Object.keys(row)[0]];
-      const top18Key = Object.keys(row).find(k => k.startsWith('Top'));
-      const top18    = parseFloat(row[top18Key] || '0');
-      const exp      = expRanks[player];
+      const playerKey = Object.keys(row).find(k => normalizeKey(k).toLowerCase() === 'player_id') || Object.keys(row)[0];
+      const player = (row[playerKey] || '').trim();
+      const topProb = parseProbability(row[probKey]);
+      const exp = expRanks[player];
+
       return {
         player,
-        top18Prob: isNaN(top18) ? 0 : top18,
-        avgRank:   exp ? exp.avgRank : null,
+        topProb: isNaN(topProb) ? 0 : topProb,
+        avgRank: exp ? exp.avgRank : null,
       };
     }).filter(p => p.player);
 
     // Sort: odds descending, avg rank ascending as tiebreak
     players.sort((a, b) => {
-      if (a.top18Prob !== b.top18Prob) return b.top18Prob - a.top18Prob;
+      if (a.topProb !== b.topProb) return b.topProb - a.topProb;
       if (a.avgRank !== null && b.avgRank !== null) return a.avgRank - b.avgRank;
       if (a.avgRank !== null) return -1;
-      if (b.avgRank !== null) return  1;
+      if (b.avgRank !== null) return 1;
       return 0;
     });
 
     const LIMITED_POOL = 50; // match your eval_pool
-
     const limitedPlayers = players.slice(0, LIMITED_POOL);
 
     limitedPlayers.forEach((p, i) => p.displayRank = i + 1);
