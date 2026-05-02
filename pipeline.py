@@ -50,7 +50,7 @@ def predict_from_snapshots(snapshots, model, noise_std=0.0):
 # ── Single simulation run ─────────────────────────────────────────────────────
 
 def simulate_one_run(start_standings, snapshots, model,
-                     schedule, noise_std, inactive_players=None):
+                     schedule, noise_std, inactive_players=None, cutoff_rank=18):
     """
     Simulate one Monte Carlo path.
 
@@ -77,7 +77,8 @@ def simulate_one_run(start_standings, snapshots, model,
 
         # Rank everyone
         ranked = sorted(standings.items(), key=lambda x: x[1], reverse=True)
-        cutoff_val = ranked[17][1] if len(ranked) >= 18 else 0.0
+        cutoff_idx = cutoff_rank - 1
+        cutoff_val = ranked[cutoff_idx][1] if len(ranked) >= cutoff_rank else 0.0
 
         cutoff_series.append({'date': date, 'cutoff': cutoff_val})
 
@@ -97,7 +98,7 @@ def simulate_one_run(start_standings, snapshots, model,
 # ── Main simulation runner ────────────────────────────────────────────────────
 
 def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
-                    inactive_players=None):
+                    inactive_players=None, cutoff_rank=18):
     """
     Pre-computes feature snapshots once, then runs n_sim Monte Carlo paths fast.
     """
@@ -125,7 +126,8 @@ def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
 
         c_series, p_series = simulate_one_run(
             start_standings, snapshots, model,
-            schedule, noise_std, inactive_players
+            schedule, noise_std, inactive_players,
+            cutoff_rank=cutoff_rank
         )
         cutoff_history.append(c_series)
         player_history.append(p_series)

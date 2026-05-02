@@ -405,7 +405,7 @@
   </div>
   <div class="stat-cell">
     <div class="stat-label">Playoff Spots</div>
-    <div class="stat-value">18</div>
+    <div class="stat-value">19</div>
   </div>
   <div class="stat-cell">
     <div class="stat-label">Last Game</div>
@@ -447,6 +447,7 @@
 const PLAYOFF_ODDS_CSV     = 'data/playoff_odds.csv';
 const EXPECTED_RANKING_TXT = 'data/expected_final_ranking.txt';
 const RAW_DATA_CSV         = 'data/raw_data.csv';
+const PLAYOFF_CUTOFF = 19;
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -526,7 +527,7 @@ function render(players) {
     const delay = Math.min(i * 18, 300);
     const bc    = badgeClass(p.displayRank, zoneCode);
 
-    if (!cutoffInserted && p.displayRank > 18) {
+    if (!cutoffInserted && p.displayRank > PLAYOFF_CUTOFF) {
       html += `<div class="cutoff-divider"><span>── Playoff cutoff ──</span></div>`;
       cutoffInserted = true;
     }

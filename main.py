@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 from features import build_features, get_feature_columns
 from model import train_model
@@ -21,11 +22,12 @@ from plots import (
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 PLAYER_TO_TRACK  = 'Антуан Гризманн'
-INACTIVE_PLAYERS = ['Дядя Витя', 'Кесадилия', 'Комарик']
+INACTIVE_PLAYERS = []
 N_SIM            = 1000
 NOISE_STD        = 200
 EVAL_POOL        = 100
 TOP_N_RANK_PLOT  = 18
+PLAYOFF_CUTOFF   = 19
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -59,21 +61,60 @@ def save_expected_ranking(final_ranking, path='data/expected_final_ranking.txt')
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-df = pd.read_csv('data/raw_data.csv')
+RAW_PATH = 'data/raw_data.csv'
+ODDS_CSV_PATH = 'data/playoff_odds.csv'
+ODDS_XLSX_PATH = 'data/playoff_odds.xlsx'
+
+# 0) Safe load + season-start handling (empty/missing raw data)
+if not os.path.exists(RAW_PATH) or os.path.getsize(RAW_PATH) == 0:
+    print("raw_data.csv is missing or empty. Initializing season-start placeholder outputs.")
+
+    # Ensure playoff odds file exists so index.html can read it
+    empty_odds = pd.DataFrame(columns=['player_id', 'Cutoff Prob'])
+    empty_odds.to_csv(ODDS_CSV_PATH, index=False)
+
+    # Optional text placeholders
+    with open('data/rankings.txt', 'w', encoding='utf-8') as f:
+        f.write("No games played yet.\n")
+    with open('data/averages.txt', 'w', encoding='utf-8') as f:
+        f.write("No games played yet.\n")
+    with open('data/expected_final_ranking.txt', 'w', encoding='utf-8') as f:
+        f.write("No simulations yet.\n")
+
+    print("Initialized empty season files.")
+    raise SystemExit(0)
+
+df = pd.read_csv(RAW_PATH)
+
+# if file exists but has no rows
+if df.empty:
+    print("raw_data.csv has headers but no rows. Initializing season-start placeholder outputs.")
+    empty_odds = pd.DataFrame(columns=['player_id', 'Cutoff Prob'])
+    empty_odds.to_csv(ODDS_CSV_PATH, index=False)
+
+    with open('data/rankings.txt', 'w', encoding='utf-8') as f:
+        f.write("No games played yet.\n")
+    with open('data/averages.txt', 'w', encoding='utf-8') as f:
+        f.write("No games played yet.\n")
+    with open('data/expected_final_ranking.txt', 'w', encoding='utf-8') as f:
+        f.write("No simulations yet.\n")
+
+    raise SystemExit(0)
+
 df['date'] = pd.to_datetime(df['date'])
 today = df['date'].max()
 
-# 1. Leaderboard files
+# 1) Leaderboard files
 save_rankings(df, today)
 save_averages(df)
 
-# 2. Train model
+# 2) Train model
 print("\n── Training model ──")
 df_features = build_features(df)
 feature_cols = get_feature_columns(df_features)
 model = train_model(df_features, feature_cols)
 
-# 3. Future schedule
+# 3) Future schedule
 next_day = str((today + pd.Timedelta(days=1)).date())
 future_schedule = build_calendar(
     start_date=next_day,
@@ -81,8 +122,28 @@ future_schedule = build_calendar(
     overrides={pd.Timestamp('2026-05-01'): 'bounty'}
 )
 
+# NEW: handle "season complete" case by writing FINAL odds from actual standings
 if not future_schedule:
-    print("No future games — nothing to simulate.")
+    print("No future games — season appears complete. Writing final standings odds file.")
+
+    standings = (
+        df.groupby('player_id', as_index=False)['points']
+        .sum()
+        .sort_values('points', ascending=False)
+        .reset_index(drop=True)
+    )
+    standings['rank'] = standings.index + 1
+    standings['Cutoff Prob'] = (standings['rank'] <= PLAYOFF_CUTOFF).astype(float)
+
+    # Keep output format simple/compatible for index reader
+    final_odds = standings[['player_id', 'Cutoff Prob']].copy()
+    final_odds.to_csv(ODDS_CSV_PATH, index=False)
+    print(f"Saved {ODDS_CSV_PATH} (final deterministic standings).")
+
+    # Optional: also write xlsx to keep parity with existing outputs
+    final_odds.to_excel(ODDS_XLSX_PATH, index=False)
+    print(f"Saved {ODDS_XLSX_PATH}")
+
 else:
     print(f"\nFuture schedule: {len(future_schedule)} game days")
     for d, t in future_schedule:
@@ -95,6 +156,7 @@ else:
         n_sim=N_SIM,
         noise_std=NOISE_STD,
         inactive_players=INACTIVE_PLAYERS,
+        cutoff_rank=PLAYOFF_CUTOFF
     )
 
     # 5. Summaries
@@ -112,6 +174,7 @@ else:
         cutoff_history, expected_players, PLAYER_TO_TRACK,
         player_path=player_sim_path,
         df_actual=df,
+        cutoff_rank=PLAYOFF_CUTOFF,
     )
 
     # 7. Rank projections
@@ -122,14 +185,14 @@ else:
     actual_rank_paths = {p: get_actual_rank_path(df, p) for p in top_players}
     sim_rank_paths    = {p: compute_expected_player_rank(player_history, p) for p in top_players}
 
-    plot_rank_projections_multi(actual_rank_paths, sim_rank_paths, today, top_n=TOP_N_RANK_PLOT)
+    plot_rank_projections_multi(actual_rank_paths, sim_rank_paths, today, top_n=TOP_N_RANK_PLOT, cutoff_rank=PLAYOFF_CUTOFF)
 
     # 8. expected_final_ranking.txt
     final_ranking = compute_expected_final_ranking(player_history, eval_pool=EVAL_POOL, output_top=EVAL_POOL)
     save_expected_ranking(final_ranking)
 
     # 9. playoff_odds.csv + .xlsx
-    odds_df = compute_playoff_odds(player_history, cutoff=18, eval_pool=EVAL_POOL)
-    odds_df.to_csv('data/playoff_odds.csv')
-    print("Saved data/playoff_odds.csv")
-    save_playoff_odds_excel(odds_df, 'data/playoff_odds.xlsx')
+    odds_df = compute_playoff_odds(player_history, cutoff=PLAYOFF_CUTOFF, eval_pool=EVAL_POOL)
+    odds_df.to_csv(ODDS_CSV_PATH, index=False)
+    print(f"Saved {ODDS_CSV_PATH}")
+    save_playoff_odds_excel(odds_df, ODDS_XLSX_PATH)

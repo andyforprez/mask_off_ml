@@ -11,7 +11,7 @@ from openpyxl.utils import get_column_letter
 
 # ── 1. Cutoff vs Player ───────────────────────────────────────────────────────
 
-def _compute_actual_cutoff_series(df):
+def _compute_actual_cutoff_series(df, cutoff_rank=18):
     """Compute the 18th-place cumulative points at each historical date."""
     df = df.copy()
     df['date'] = pd.to_datetime(df['date'])
@@ -24,13 +24,14 @@ def _compute_actual_cutoff_series(df):
             pid = row['player_id']
             last_pts[pid] = last_pts.get(pid, 0.0) + row['points']
         ranked = sorted(last_pts.values(), reverse=True)
-        cutoff = ranked[17] if len(ranked) >= 18 else (ranked[-1] if ranked else 0)
+        cutoff_idx = cutoff_rank - 1
+        cutoff = ranked[cutoff_idx] if len(ranked) >= cutoff_rank else (ranked[-1] if ranked else 0)
         result.append({'date': d, 'cutoff': cutoff})
     return result
 
 
 def plot_cutoff_vs_player(cutoff_history, expected_players, player_name,
-                           player_path=None, df_actual=None):
+                           player_path=None, df_actual=None, cutoff_rank=18):
     """
     Two-panel figure.
     Left:  full history (solid) + projected future (dashed) for both
@@ -49,7 +50,7 @@ def plot_cutoff_vs_player(cutoff_history, expected_players, player_name,
         ac_dates  = pd.to_datetime([x['date'] for x in actual_cutoff])
         ac_vals   = [x['cutoff'] for x in actual_cutoff]
         ax.plot(ac_dates, ac_vals, color='steelblue', linewidth=2,
-                label='18th place (actual)')
+                label=f'{cutoff_rank}th place (actual)')
 
     # ── Projected cutoff: mean ± std band (dashed blue) ──
     if cutoff_history:
@@ -74,7 +75,7 @@ def plot_cutoff_vs_player(cutoff_history, expected_players, player_name,
         proj_std   = np.array(proj_std)
 
         ax.plot(proj_dates, proj_vals, color='steelblue', linewidth=2,
-                linestyle='--', label='18th place (projected mean)')
+                linestyle='--', label=f'{cutoff_rank}th place (projected mean)')
         ax.fill_between(proj_dates, proj_vals - proj_std, proj_vals + proj_std,
                          color='steelblue', alpha=0.15, label='±1 std')
 
@@ -149,7 +150,7 @@ def plot_cutoff_vs_player(cutoff_history, expected_players, player_name,
         else:
             ax2.set_title('Final Cutoff Distribution')
 
-        ax2.set_xlabel('18th-place Points')
+        ax2.set_xlabel(f'{cutoff_rank}th-place Points')
         ax2.set_ylabel('Frequency (simulations)')
         ax2.legend(fontsize=8)
         ax2.grid(axis='y', alpha=0.3)
@@ -162,7 +163,7 @@ def plot_cutoff_vs_player(cutoff_history, expected_players, player_name,
 
 # ── 2. Rank Projections Multi ─────────────────────────────────────────────────
 
-def plot_rank_projections_multi(real_ranks_dict, sim_ranks_dict, today, top_n=20):
+def plot_rank_projections_multi(real_ranks_dict, sim_ranks_dict, today, top_n=18, cutoff_rank=18):
     """
     Solid lines = actual rank history.
     Dashed lines = projected rank (mean across simulations).
@@ -208,8 +209,8 @@ def plot_rank_projections_multi(real_ranks_dict, sim_ranks_dict, today, top_n=20
 
     ax.axvline(pd.Timestamp(today), color='black', linewidth=1.5,
                linestyle=':', alpha=0.6, label='Today')
-    ax.axhline(18.5, color='limegreen', linewidth=1.5, linestyle='--', alpha=0.7,
-               label='Playoff cutoff (18)')
+    ax.axhline(cutoff_rank + 0.5, color='limegreen', linewidth=1.5, linestyle='--', alpha=0.7,
+               label=f'Playoff cutoff ({cutoff_rank})')
 
     ax.invert_yaxis()
     ax.set_ylim(top_n + 2, 0)
