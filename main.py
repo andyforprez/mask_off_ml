@@ -118,8 +118,8 @@ model = train_model(df_features, feature_cols)
 next_day = str((today + pd.Timedelta(days=1)).date())
 future_schedule = build_calendar(
     start_date=next_day,
-    end_date='2026-05-01',
-    overrides={pd.Timestamp('2026-05-01'): 'bounty'}
+    end_date='2026-05-30',
+    overrides={}
 )
 
 # NEW: handle "season complete" case by writing FINAL odds from actual standings
