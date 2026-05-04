@@ -62,8 +62,11 @@ def save_expected_ranking(final_ranking, path='data/expected_final_ranking.txt')
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 RAW_PATH = 'data/raw_data.csv'
+APRIL_PATH = 'data/raw_data_april.csv'
 ODDS_CSV_PATH = 'data/playoff_odds.csv'
 ODDS_XLSX_PATH = 'data/playoff_odds.xlsx'
+USE_APRIL_FOR_TRAINING = True
+IGNORE_PLAYER_TENDENCIES_FOR_TRAINING = False
 
 # 0) Safe load + season-start handling (empty/missing raw data)
 if not os.path.exists(RAW_PATH) or os.path.getsize(RAW_PATH) == 0:
@@ -104,13 +107,31 @@ if df.empty:
 df['date'] = pd.to_datetime(df['date'])
 today = df['date'].max()
 
+def build_training_frame(current_df):
+    frames = [current_df.copy()]
+    if USE_APRIL_FOR_TRAINING and os.path.exists(APRIL_PATH) and os.path.getsize(APRIL_PATH) > 0:
+        april_df = pd.read_csv(APRIL_PATH)
+        if not april_df.empty:
+            april_df['date'] = pd.to_datetime(april_df['date'])
+            frames.append(april_df)
+
+    train_df = pd.concat(frames, ignore_index=True)
+    train_df['date'] = pd.to_datetime(train_df['date'])
+
+    if IGNORE_PLAYER_TENDENCIES_FOR_TRAINING:
+        train_df = train_df.reset_index(drop=True)
+        train_df['player_id'] = train_df.index.map(lambda i: f'anon_{i}')
+
+    return train_df
+
 # 1) Leaderboard files
 save_rankings(df, today)
 save_averages(df)
 
 # 2) Train model
 print("\n── Training model ──")
-df_features = build_features(df)
+train_df = build_training_frame(df)
+df_features = build_features(train_df)
 feature_cols = get_feature_columns(df_features)
 model = train_model(df_features, feature_cols)
 
