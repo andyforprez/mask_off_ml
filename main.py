@@ -65,7 +65,7 @@ RAW_PATH = 'data/raw_data.csv'
 APRIL_PATH = 'data/raw_data_april.csv'
 ODDS_CSV_PATH = 'data/playoff_odds.csv'
 ODDS_XLSX_PATH = 'data/playoff_odds.xlsx'
-USE_APRIL_FOR_TRAINING = True
+USE_APRIL_FOR_TRAINING = False
 IGNORE_PLAYER_TENDENCIES_FOR_TRAINING = False
 
 # 0) Safe load + season-start handling (empty/missing raw data)

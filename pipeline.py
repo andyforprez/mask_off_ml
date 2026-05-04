@@ -73,23 +73,47 @@ def compute_attendance_probabilities(df):
     if df.empty or 'player_id' not in df.columns or 'tournament_type' not in df.columns:
         return {}
 
-    calendar_by_type = df.groupby('tournament_type')['date'].nunique()
-    player_type_counts = df.groupby(['player_id', 'tournament_type'])['date'].nunique()
-    player_overall = df.groupby('player_id')['date'].nunique()
-    total_dates = max(1, df['date'].nunique())
+    hist = df.copy()
+    hist['date'] = pd.to_datetime(hist['date'])
+    hist['dow'] = hist['date'].dt.dayofweek
+
+    calendar_by_type = hist.groupby('tournament_type')['date'].nunique()
+    player_type_counts = hist.groupby(['player_id', 'tournament_type'])['date'].nunique()
+    player_overall = hist.groupby('player_id')['date'].nunique()
+    total_dates = max(1, hist['date'].nunique())
+
+    # Recency (last 10 events): attendance momentum proxy
+    recency_rate = {}
+    for player, g in hist.sort_values('date').groupby('player_id'):
+        lookback = g.tail(10)
+        span_days = (lookback['date'].max() - lookback['date'].min()).days + 1 if not lookback.empty else 0
+        recency = len(lookback) / max(10.0, span_days / 2.0)
+        recency_rate[player] = max(0.05, min(0.98, recency))
+
+    # Day-of-week preference
+    overall_dow_rate = hist.groupby('dow')['date'].nunique() / float(total_dates)
+    player_dow_counts = hist.groupby(['player_id', 'dow'])['date'].nunique()
+    player_dow_rate = {}
+    for (player, dow), cnt in player_dow_counts.items():
+        base = overall_dow_rate.get(dow, 0.5)
+        player_rate = float(cnt) / float(total_dates)
+        player_dow_rate[(player, dow)] = max(0.05, min(0.98, 0.65 * player_rate + 0.35 * base))
 
     attendance = {}
     for (player, t_type), played_days in player_type_counts.items():
         type_days = int(calendar_by_type.get(t_type, 0))
         overall_prob = float(player_overall.get(player, 0)) / float(total_dates)
         type_prob = (float(played_days) / float(type_days)) if type_days > 0 else overall_prob
-        blended = 0.7 * type_prob + 0.3 * overall_prob
+        rec = recency_rate.get(player, overall_prob)
+        blended = 0.5 * type_prob + 0.25 * overall_prob + 0.25 * rec
         attendance.setdefault(player, {})[t_type] = max(0.05, min(0.98, blended))
 
     # fallback per-player baseline for missing tournament types
     for player, played_days in player_overall.items():
         overall_prob = max(0.05, min(0.98, float(played_days) / float(total_dates)))
         attendance.setdefault(player, {})['_default'] = overall_prob
+
+    attendance['_dow'] = player_dow_rate
 
     return attendance
 
@@ -98,7 +122,7 @@ def compute_attendance_probabilities(df):
 
 def simulate_one_run(start_standings, snapshots, model,
                      schedule, noise_std, inactive_players=None,
-                     cutoff_rank=18, tournament_adjustments=None, attendance_probs=None):
+                     cutoff_rank=18, tournament_adjustments=None, attendance_probs=None, dynamic_feature_updates=False):
     """
     Simulate one Monte Carlo path.
 
@@ -108,12 +132,15 @@ def simulate_one_run(start_standings, snapshots, model,
         player_series: dict player -> list of {'date', 'points', 'rank'}
     """
     standings = start_standings.copy()
+    snapshots = {p: v.copy() for p, v in snapshots.items()}
     inactive  = set(inactive_players or [])
 
     cutoff_series = []
     player_series = {}
 
     for date, t_type in schedule:
+        dt = pd.to_datetime(date)
+        dow = dt.dayofweek
         # Get predicted *incremental* points for this single game day
         day_preds = predict_from_snapshots(snapshots, model, noise_std)
         day_multiplier = 1.0
@@ -126,9 +153,29 @@ def simulate_one_run(start_standings, snapshots, model,
             if attendance_probs:
                 pmap = attendance_probs.get(player, {})
                 p_attend = pmap.get(t_type, pmap.get('_default', 1.0))
+                dow_map = attendance_probs.get('_dow', {})
+                dow_attend = dow_map.get((player, dow), pmap.get('_default', 1.0))
+                p_attend = max(0.03, min(0.99, 0.7 * p_attend + 0.3 * dow_attend))
                 if np.random.random() > p_attend:
                     continue
-                standings[player] = standings.get(player, 0.0) + (pts * day_multiplier)
+                add_pts = pts * day_multiplier
+                standings[player] = standings.get(player, 0.0) + add_pts
+
+                if dynamic_feature_updates:
+                    # Lightweight dynamic state update to increase crossing/realism
+                    vec = snapshots.get(player)
+                    if vec is not None and len(vec) > 0:
+                        vec = vec.copy()
+                        vec[0] = 0.85 * vec[0] + 0.15 * add_pts  # rolling_mean_5-ish
+                        if len(vec) > 3:
+                            vec[3] = 0.8 * vec[3] + 0.2 * add_pts  # rolling_mean_3-ish
+                        if len(vec) > 4:
+                            vec[4] = 0.9 * vec[4] + 0.1 * add_pts  # rolling_mean_10-ish
+                        if len(vec) > 5:
+                            vec[5] = vec[3] - vec[4] if len(vec) > 4 else vec[5]  # momentum-ish
+                        if len(vec) > 6:
+                            vec[6] = vec[6] + 1.0  # games_played-ish
+                        snapshots[player] = vec
 
         # Rank everyone
         ranked = sorted(standings.items(), key=lambda x: x[1], reverse=True)
@@ -153,7 +200,7 @@ def simulate_one_run(start_standings, snapshots, model,
 # ── Main simulation runner ────────────────────────────────────────────────────
 
 def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
-                    inactive_players=None, cutoff_rank=18):
+                    inactive_players=None, cutoff_rank=18, dynamic_feature_updates=True):
     """
     Pre-computes feature snapshots once, then runs n_sim Monte Carlo paths fast.
     """
@@ -186,7 +233,8 @@ def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
             schedule, noise_std, inactive_players,
             cutoff_rank=cutoff_rank,
             tournament_adjustments=tournament_adjustments,
-            attendance_probs=attendance_probs
+            attendance_probs=attendance_probs,
+            dynamic_feature_updates=dynamic_feature_updates
         )
         cutoff_history.append(c_series)
         player_history.append(p_series)
