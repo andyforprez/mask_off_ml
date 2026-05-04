@@ -1,8 +1,9 @@
 import pandas as pd
 
 DEFAULT_SCHEDULE = {
+    1: 'high roller',
     2: 'double rating points',
-    3: 'high roller',
+    3: 'phoenix',
     4: 'deep classic',
     5: 'bounty',
     6: 'triple shot'

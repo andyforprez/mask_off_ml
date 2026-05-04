@@ -2,11 +2,81 @@ import pandas as pd
 import numpy as np
 
 TOURNAMENT_TYPES = {
-    'double rating points',
     'high roller',
+    'double rating points',
+    'phoenix',
     'deep classic',
     'bounty',
     'triple shot'
+}
+
+TOURNAMENT_METADATA = {
+    'high roller': {
+        'start_stack_k': 30,
+        'has_bb_ante': 1,
+        'rebuy_limit': -1,  # -1 means unlimited
+        'addon_stack_k': 60,
+        'rating_multiplier': 1.0,
+        'bounty_points': 0,
+        'points_paid_places': 30,
+        'field_size_typical': 120,
+        'beginner_friendly': 0,
+    },
+    'double rating points': {
+        'start_stack_k': 25,
+        'has_bb_ante': 1,
+        'rebuy_limit': -1,
+        'addon_stack_k': 50,
+        'rating_multiplier': 2.0,
+        'bounty_points': 0,
+        'points_paid_places': 30,
+        'field_size_typical': 110,
+        'beginner_friendly': 0,
+    },
+    'phoenix': {
+        'start_stack_k': 60,
+        'has_bb_ante': 1,
+        'rebuy_limit': 1,
+        'addon_stack_k': 120,
+        'rating_multiplier': 1.0,
+        'bounty_points': 0,
+        'points_paid_places': 30,
+        'field_size_typical': 100,
+        'beginner_friendly': 0,
+    },
+    'deep classic': {
+        'start_stack_k': 50,
+        'has_bb_ante': 1,
+        'rebuy_limit': -1,
+        'addon_stack_k': 100,
+        'rating_multiplier': 1.0,
+        'bounty_points': 0,
+        'points_paid_places': 30,
+        'field_size_typical': 100,
+        'beginner_friendly': 0,
+    },
+    'bounty': {
+        'start_stack_k': 25,
+        'has_bb_ante': 1,
+        'rebuy_limit': -1,
+        'addon_stack_k': 50,
+        'rating_multiplier': 1.0,
+        'bounty_points': 20,
+        'points_paid_places': 30,
+        'field_size_typical': 110,
+        'beginner_friendly': 0,
+    },
+    'triple shot': {
+        'start_stack_k': 25,
+        'has_bb_ante': 0,
+        'rebuy_limit': 3,
+        'addon_stack_k': 0,
+        'rating_multiplier': 1.0,
+        'bounty_points': 0,
+        'points_paid_places': 30,
+        'field_size_typical': 80,
+        'beginner_friendly': 1,
+    },
 }
 
 
@@ -26,6 +96,8 @@ def add_basic_features(df):
     df['rolling_mean_10'] = df.groupby('player_id')['points'].transform(lambda x: x.shift(1).rolling(10).mean())
     df['momentum'] = df['rolling_mean_3'] - df['rolling_mean_10']
     df['games_played'] = df.groupby('player_id').cumcount()
+    df['rolling_bounties_3'] = df.groupby('player_id')['bounties'].transform(lambda x: x.shift(1).rolling(3).mean())
+    df['bounty_to_points_ratio_10'] = df.groupby('player_id')['bounties'].transform(lambda x: x.shift(1).rolling(10).mean()) * 20.0 / df['rolling_mean_10'] + 1e-6
     return df
 
 
@@ -54,6 +126,18 @@ def add_tournament_features(df):
         mask = df['tournament_type'] == t
         col = f'{t}_mean'
         df[col] = df[mask].groupby('player_id')['points'].transform(lambda x: x.shift(1).expanding().mean())
+
+    for feature_name in [
+        'start_stack_k', 'has_bb_ante', 'rebuy_limit', 'addon_stack_k',
+        'rating_multiplier', 'bounty_points', 'points_paid_places',
+        'field_size_typical', 'beginner_friendly'
+    ]:
+        df[feature_name] = df['tournament_type'].map(
+            lambda t: TOURNAMENT_METADATA.get(t, {}).get(feature_name, 0)
+        )
+
+    df['is_unlimited_rebuy'] = (df['rebuy_limit'] < 0).astype(int)
+    df['effective_start_stack_k'] = df['start_stack_k'] + df['addon_stack_k']
 
     return df
 

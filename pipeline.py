@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import warnings
-from features import build_features, get_feature_columns
+from features import build_features, get_feature_columns, TOURNAMENT_METADATA
 
 
 # ── Feature snapshot (computed once) ─────────────────────────────────────────
@@ -48,11 +48,57 @@ def predict_from_snapshots(snapshots, model, noise_std=0.0):
     preds = np.maximum(preds, 0)
     return dict(zip(players, preds.tolist()))
 
+def compute_tournament_type_adjustments(df):
+    if df.empty or 'tournament_type' not in df.columns:
+        return {}
+
+    overall_mean = float(df['points'].mean()) if len(df) else 0.0
+    if overall_mean <= 0:
+        return {}
+
+    means = df.groupby('tournament_type')['points'].mean().to_dict()
+    adjustments = {}
+    for t_type, mean_pts in means.items():
+        historical_ratio = float(mean_pts) / overall_mean
+        rating_multiplier = TOURNAMENT_METADATA.get(t_type, {}).get('rating_multiplier', 1.0)
+        adjustments[t_type] = historical_ratio * float(rating_multiplier)
+
+    return adjustments
+
+def compute_attendance_probabilities(df):
+    """
+    Estimate attendance probability per player per tournament type.
+    Returns: dict[player_id][t_type] = probability in [0, 1]
+    """
+    if df.empty or 'player_id' not in df.columns or 'tournament_type' not in df.columns:
+        return {}
+
+    calendar_by_type = df.groupby('tournament_type')['date'].nunique()
+    player_type_counts = df.groupby(['player_id', 'tournament_type'])['date'].nunique()
+    player_overall = df.groupby('player_id')['date'].nunique()
+    total_dates = max(1, df['date'].nunique())
+
+    attendance = {}
+    for (player, t_type), played_days in player_type_counts.items():
+        type_days = int(calendar_by_type.get(t_type, 0))
+        overall_prob = float(player_overall.get(player, 0)) / float(total_dates)
+        type_prob = (float(played_days) / float(type_days)) if type_days > 0 else overall_prob
+        blended = 0.7 * type_prob + 0.3 * overall_prob
+        attendance.setdefault(player, {})[t_type] = max(0.05, min(0.98, blended))
+
+    # fallback per-player baseline for missing tournament types
+    for player, played_days in player_overall.items():
+        overall_prob = max(0.05, min(0.98, float(played_days) / float(total_dates)))
+        attendance.setdefault(player, {})['_default'] = overall_prob
+
+    return attendance
+
 
 # ── Single simulation run ─────────────────────────────────────────────────────
 
 def simulate_one_run(start_standings, snapshots, model,
-                     schedule, noise_std, inactive_players=None, cutoff_rank=18):
+                     schedule, noise_std, inactive_players=None,
+                     cutoff_rank=18, tournament_adjustments=None, attendance_probs=None):
     """
     Simulate one Monte Carlo path.
 
@@ -70,12 +116,19 @@ def simulate_one_run(start_standings, snapshots, model,
     for date, t_type in schedule:
         # Get predicted *incremental* points for this single game day
         day_preds = predict_from_snapshots(snapshots, model, noise_std)
-
+        day_multiplier = 1.0
+        if tournament_adjustments:
+            day_multiplier = tournament_adjustments.get(t_type, 1.0)
         # Add predicted points to running standings (skip inactive)
         for player, pts in day_preds.items():
             if player in inactive:
                 continue
-            standings[player] = standings.get(player, 0.0) + pts
+            if attendance_probs:
+                pmap = attendance_probs.get(player, {})
+                p_attend = pmap.get(t_type, pmap.get('_default', 1.0))
+                if np.random.random() > p_attend:
+                    continue
+                standings[player] = standings.get(player, 0.0) + (pts * day_multiplier)
 
         # Rank everyone
         ranked = sorted(standings.items(), key=lambda x: x[1], reverse=True)
@@ -121,6 +174,8 @@ def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
     cutoff_history = []
     player_history = []
     log_every      = max(1, n_sim // 10)
+    tournament_adjustments = compute_tournament_type_adjustments(df)
+    attendance_probs = compute_attendance_probabilities(df)
 
     for i in range(n_sim):
         if (i + 1) % log_every == 0:
@@ -129,7 +184,9 @@ def run_simulations(df, model, schedule, n_sim=500, noise_std=150,
         c_series, p_series = simulate_one_run(
             start_standings, snapshots, model,
             schedule, noise_std, inactive_players,
-            cutoff_rank=cutoff_rank
+            cutoff_rank=cutoff_rank,
+            tournament_adjustments=tournament_adjustments,
+            attendance_probs=attendance_probs
         )
         cutoff_history.append(c_series)
         player_history.append(p_series)
