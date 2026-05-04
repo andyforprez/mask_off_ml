@@ -27,7 +27,7 @@ N_SIM            = 1000
 NOISE_STD        = 200
 EVAL_POOL        = 100
 TOP_N_RANK_PLOT  = 18
-PLAYOFF_CUTOFF   = 19
+PLAYOFF_CUTOFF   = 18
 # ─────────────────────────────────────────────────────────────────────────────
 
 
