@@ -198,8 +198,8 @@ else:
         cutoff=PLAYOFF_CUTOFF,
         eval_pool=EVAL_POOL,
         games_played=games_played,
-        min_games_for_full=10,
-        min_multiplier=0.22,
+        min_games_for_full=6,
+        min_multiplier=0.1,
     )
     odds_csv_df = odds_df.copy()
     odds_csv_df.insert(0, 'player_id', odds_df.index.astype(str))
