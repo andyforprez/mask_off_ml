@@ -269,9 +269,19 @@ def compute_playoff_odds(player_history, cutoff=18, eval_pool=50, games_played=N
             df.loc[player, rank_cols] = 0.0
             df.loc[player, rank_cols[-1]] = target
 
-
+    df[rank_cols] = df[rank_cols].clip(lower=0.0)
     col = f'Top {cutoff} Prob'
     df[col] = blended.where(blended >= display_threshold, 0.0)
+    for player in df.index:
+        target = df.at[player, col]
+        row_sum = float(df.loc[player, rank_cols].sum())
+        if target < display_threshold:
+            df.loc[player, rank_cols] = 0.0
+        elif row_sum > 0:
+            df.loc[player, rank_cols] *= (target / row_sum)
+        else:
+            df.loc[player, rank_cols] = 0.0
+            df.loc[player, rank_cols[-1]] = target
     df = df.sort_values(col, ascending=False)
     df.index.name = 'player_id'
     return df
