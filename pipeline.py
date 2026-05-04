@@ -18,7 +18,9 @@ def build_player_snapshots(df, model, feature_cols):
         .tail(1)
         .copy()
     )
-
+    for col in feature_cols:
+        if col not in latest.columns:
+            latest[col] = 0.0
     snapshots = {}
     for _, row in latest.iterrows():
         pid = row['player_id']
@@ -186,8 +188,23 @@ def compute_expected_player_rank(player_history, player_id):
     df = pd.DataFrame(rows)
     return df.groupby('date')['rank'].mean()
 
+def compute_sample_multiplier(games_played, min_games_for_full=10, min_multiplier=0.22):
+    if games_played is None or games_played <= 0:
+        return float(min_multiplier)
+    if games_played >= min_games_for_full:
+        return 1.0
+    min_multiplier = max(0.0, min(1.0, float(min_multiplier)))
+    span = 1.0 - min_multiplier
+    return float(min_multiplier + (games_played / min_games_for_full) * span)
 
-def compute_playoff_odds(player_history, cutoff=18, eval_pool=50):
+def compute_season_progress(games_played_dict, min_games_for_full=10):
+    if not games_played_dict:
+        return 0.0
+    counts = list(games_played_dict.values())
+    median_games = float(np.median(counts))
+    return min(1.0, median_games / min_games_for_full)
+
+def compute_playoff_odds(player_history, cutoff=18, eval_pool=50, games_played=None, min_games_for_full=10, min_multiplier=0.22):
     """
     Returns DataFrame with rows = top eval_pool players (by mean final pts),
     columns = Rank 1..cutoff + 'Top N Prob'.
@@ -200,24 +217,61 @@ def compute_playoff_odds(player_history, cutoff=18, eval_pool=50):
                 final_pts.setdefault(player, []).append(series[-1]['points'])
 
     avg_pts     = {p: float(np.mean(v)) for p, v in final_pts.items()}
-    top_players = sorted(avg_pts, key=avg_pts.get, reverse=True)[:eval_pool]
-    top_set     = set(top_players)
+    all_players = sorted(avg_pts, key=avg_pts.get, reverse=True)
+    all_set     = set(all_players)
 
-    rank_counts = {p: [0] * eval_pool for p in top_players}
+    rank_counts = {p: [0] * eval_pool for p in all_players}
     n_sim       = len(player_history)
 
     for sim in player_history:
         final = {p: sim[p][-1]['points'] for p in sim if sim[p]}
         ranked = sorted(final.items(), key=lambda x: x[1], reverse=True)
         for rank, (player, _) in enumerate(ranked):
-            if player in top_set and rank < eval_pool:
+            if player in all_set and rank < eval_pool:
                 rank_counts[player][rank] += 1
 
     df = pd.DataFrame(rank_counts, index=[f'Rank {i+1}' for i in range(eval_pool)]).T
     df = df / n_sim
     df = df.iloc[:, :cutoff]
+    raw_top_prob = df.sum(axis=1)
+
+    if games_played is not None:
+        multipliers = pd.Series({
+            player: compute_sample_multiplier(games_played.get(player, 0), min_games_for_full, min_multiplier)
+            for player in df.index
+        })
+    else:
+        multipliers = pd.Series(1.0, index=df.index)
+
+    sim_adjusted = (raw_top_prob * multipliers).clip(lower=0, upper=1)
+
+    season_progress = compute_season_progress(games_played, min_games_for_full) if games_played else 0.0
+    season_newness = (1.0 - season_progress) ** 2
+
+    total_players = len(all_players) if all_players else 1
+    rank_weights = pd.Series({
+        p: ((total_players - i) / total_players) ** 1.5 for i, p in enumerate(all_players)
+    }, dtype=float)
+    floor_max = (cutoff / max(total_players, cutoff)) * 0.8
+    prob_floor = rank_weights * floor_max * season_newness
+    blended = sim_adjusted.combine(prob_floor, max).clip(upper=1)
+
+    display_threshold = 0.0005
+    rank_cols = df.columns.tolist()
+    for player in df.index:
+        raw = sim_adjusted[player]
+        target = blended[player]
+        if target < display_threshold:
+            df.loc[player, rank_cols] = 0.0
+        elif raw > 0:
+            df.loc[player, rank_cols] *= (target / raw)
+        else:
+            df.loc[player, rank_cols] = 0.0
+            df.loc[player, rank_cols[-1]] = target
+
+
     col = f'Top {cutoff} Prob'
-    df[col] = df.sum(axis=1)
+    df[col] = blended.where(blended >= display_threshold, 0.0)
     df = df.sort_values(col, ascending=False)
     df.index.name = 'player_id'
     return df

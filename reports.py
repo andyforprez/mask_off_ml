@@ -17,13 +17,13 @@ def save_rankings(df, target_date, path='data/rankings.txt'):
     print('Rankings Saved to data/rankings.txt')
     return standings
 
-def save_averages(df, path='data/averages.txt'):
+def save_averages(df, path='data/averages.txt', min_games=2):
     df = df.copy()
 
     stats = df.groupby('player_id').agg(total_points=('points', 'sum'), games=('points', 'count'))
     stats['average'] = stats['total_points'] / stats['games']
     stats['average'] = stats['average'].fillna(0)
-    stats = stats[stats['games'] >= 5]
+    stats = stats[stats['games'] >= min_games]
     stats = stats.sort_values('average', ascending=False).reset_index()
 
     with open(path, 'w', encoding='utf-8') as f:

@@ -618,7 +618,10 @@ async function loadData() {
     if (topColLabelEl) topColLabelEl.textContent = `Top ${playoffCutoff}`;
 
     const players = csvRows.map(row => {
-      const playerKey = Object.keys(row).find(k => normalizeKey(k).toLowerCase() === 'player_id') || Object.keys(row)[0];
+      const keys = Object.keys(row);
+      const preferredKey = keys.find(k => ['player_id','player','nickname','name'].includes(normalizeKey(k).toLowerCase()));
+      const fallbackKey = keys.find(k => !/^rank\s+\d+$/i.test(normalizeKey(k)) && !/^top\s+\d+\s+prob$/i.test(normalizeKey(k)));
+      const playerKey = preferredKey || fallbackKey || keys[0];
       const player = (row[playerKey] || '').trim();
       const topProb = parseProbability(row[probKey]);
       const exp = expRanks[player];

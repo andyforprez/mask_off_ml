@@ -192,7 +192,17 @@ else:
     save_expected_ranking(final_ranking)
 
     # 9. playoff_odds.csv + .xlsx
-    odds_df = compute_playoff_odds(player_history, cutoff=PLAYOFF_CUTOFF, eval_pool=EVAL_POOL)
-    odds_df.to_csv(ODDS_CSV_PATH, index=False)
+    games_played = df.groupby('player_id').size().to_dict()
+    odds_df = compute_playoff_odds(
+        player_history,
+        cutoff=PLAYOFF_CUTOFF,
+        eval_pool=EVAL_POOL,
+        games_played=games_played,
+        min_games_for_full=10,
+        min_multiplier=0.22,
+    )
+    odds_csv_df = odds_df.copy()
+    odds_csv_df.insert(0, 'player_id', odds_df.index.astype(str))
+    odds_csv_df.to_csv(ODDS_CSV_PATH, index=False)
     print(f"Saved {ODDS_CSV_PATH}")
     save_playoff_odds_excel(odds_df, ODDS_XLSX_PATH)
