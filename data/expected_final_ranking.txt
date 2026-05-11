@@ -1,80 +1,103 @@
 EXPECTED FINAL RANKING (FROM SIMULATION)
 ==================================================
 
-1. Noize MC - avg rank: 5.18
-2. Гризли - avg rank: 5.31
-3. Драйв - avg rank: 5.60
-4. кинчоч - avg rank: 6.57
-5. long_2203 - avg rank: 6.61
-6. Пассажир - avg rank: 6.72
-7. dolMy - avg rank: 7.46
-8. G_rant_999 - avg rank: 7.52
-9. Сокол - avg rank: 7.65
-10. terzzzzzzzzz - avg rank: 7.88
-11. Yanchik_250 - avg rank: 7.89
-12. Laches1 - avg rank: 7.98
-13. Плейбой в карты - avg rank: 14.53
-14. лучший игрок - avg rank: 15.36
-15. Пиковая Дама - avg rank: 15.85
-16. Lock - avg rank: 16.02
-17. cheremsha - avg rank: 16.45
-18. ksuhony - avg rank: 16.90
-19. Rabie - avg rank: 17.19
-20. gvrdkn - avg rank: 17.72
-21. nesmotri_v_shelll1 - avg rank: 19.82
-22. AlexBluff - avg rank: 22.94
-23. sfv - avg rank: 24.02
-24. emilian_s - avg rank: 24.11
-25. Julia_2499 - avg rank: 25.59
-26. 1С - avg rank: 26.79
-27. TryFraiz - avg rank: 27.89
-28. bogdanov - avg rank: 28.57
-29. Davit - avg rank: 30.11
-30. . - avg rank: 33.47
-31. Cordell - avg rank: 37.28
-32. Alina_97 - avg rank: 37.80
-33. Son_Ton - avg rank: 37.87
-34. Аннэтт - avg rank: 38.34
-35. Настя дай стек - avg rank: 39.03
-36. Ryumon_Hozukimaruu - avg rank: 39.13
-37. Suruchik - avg rank: 39.16
-38. Yars - avg rank: 39.42
-39. springbulk - avg rank: 39.87
-40. Retbin - avg rank: 39.94
-41. Davydovpussy - avg rank: 40.10
-42. БОЛЬШОЙ МИХА - avg rank: 40.38
-43. Rik_dds - avg rank: 40.69
-44. mflameee - avg rank: 41.32
-45. mrCelviano - avg rank: 45.01
-46. Никита - avg rank: 45.82
-47. Qrexi - avg rank: 46.86
-48. Адольф - avg rank: 47.24
-49. Gur4an - avg rank: 48.47
-50. Бэндер - avg rank: 49.16
-51. OlgaaGeorgieva - avg rank: 49.98
-52. Serg - avg rank: 50.79
-53. DARI - avg rank: 51.91
-54. Jordan - avg rank: 52.39
-55. STG - avg rank: 53.99
-56. Vitos2049 - avg rank: 54.78
-57. dance_with_vlad - avg rank: 57.03
-58. Ташкент - avg rank: 58.03
-59. elli - avg rank: 59.09
-60. He3hAy - avg rank: 59.23
-61. imt360_ATDK - avg rank: 60.41
-62. Mar_u_shka - avg rank: 62.16
-63. repe_kate - avg rank: 62.81
-64. avomerfe - avg rank: 65.76
-65. juliezh - avg rank: 67.79
-66. Fara - avg rank: 68.61
-67. Tim19 - avg rank: 68.68
-68. nsa - avg rank: 68.87
-69. twewefe - avg rank: 68.96
-70. Shuricspinoza - avg rank: 68.96
-71. frida_hk - avg rank: 69.00
-72. katerina_boc - avg rank: 69.04
-73. rus210385 - avg rank: 69.10
-74. Schwepp1S - avg rank: 69.22
-75. DanilaOdinokov - avg rank: 69.22
-76. alinaadmv - avg rank: 69.24
-77. edimerfi - avg rank: 69.41
+1. EliasPavlov - avg rank: 1.67
+2. кинчоч - avg rank: 2.57
+3. Фил - avg rank: 3.79
+4. by_twentyseven - avg rank: 4.54
+5. Иван Царевич - avg rank: 5.01
+6. Lock - avg rank: 5.91
+7. gara_077 - avg rank: 6.47
+8. lavr - avg rank: 8.22
+9. Cordell - avg rank: 8.71
+10. Похороное бюро «улыбка» - avg rank: 11.34
+11. KidPoker - avg rank: 12.30
+12. Yars - avg rank: 12.41
+13. FISHer - avg rank: 13.72
+14. 3y6a - avg rank: 14.16
+15. Антуан Гризманн - avg rank: 14.29
+16. Great Teacher Onizuka - avg rank: 14.40
+17. balamuto4ka - avg rank: 18.37
+18. Gur4an - avg rank: 18.76
+19. nk_telller - avg rank: 19.04
+20. mary_muse7 - avg rank: 21.04
+21. dzhemus - avg rank: 22.21
+22. Бэндер - avg rank: 24.37
+23. sashaRXY - avg rank: 24.62
+24. Noize MC - avg rank: 24.93
+25. Julia_2499 - avg rank: 26.22
+26. Nolekri - avg rank: 28.60
+27. Демон - avg rank: 29.73
+28. Сан Саныч - avg rank: 29.94
+29. artyomkalina - avg rank: 30.95
+30. sl1dbygad - avg rank: 33.69
+31. Moпс - avg rank: 34.14
+32. kuromi - avg rank: 34.75
+33. Lancelot - avg rank: 36.62
+34. gvrdkn - avg rank: 37.97
+35. G_rant_999 - avg rank: 38.66
+36. STrelOK - avg rank: 39.88
+37. ЛЕНИН - avg rank: 41.13
+38. sfv - avg rank: 41.62
+39. emilian_s - avg rank: 42.31
+40. Комар - avg rank: 42.92
+41. Yanchik_250 - avg rank: 43.24
+42. z9 - avg rank: 44.34
+43. Maxim - avg rank: 44.99
+44. Лось - avg rank: 45.15
+45. wasapmaaan - avg rank: 45.88
+46. лучший игрок - avg rank: 46.26
+47. Deroz - avg rank: 46.95
+48. long_2203 - avg rank: 47.51
+49. Chicago - avg rank: 50.44
+50. dolMy - avg rank: 51.96
+51. jieb - avg rank: 52.69
+52. Чека-чека - avg rank: 52.91
+53. mvp - avg rank: 56.78
+54. дисциплина - avg rank: 57.77
+55. Koff1ek - avg rank: 58.11
+56. Maza - avg rank: 59.67
+57. swapblet - avg rank: 61.14
+58. Shuricspinoza - avg rank: 61.44
+59. Chesters - avg rank: 61.45
+60. dunkaeva - avg rank: 64.39
+61. vovaa_25 - avg rank: 64.44
+62. Chinaski - avg rank: 66.22
+63. danalanaaa - avg rank: 67.08
+64. FreSko - avg rank: 68.58
+65. lethalpresence - avg rank: 68.97
+66. Ромчик - avg rank: 69.01
+67. HellGnomik - avg rank: 69.41
+68. Leomane - avg rank: 69.47
+69. bad_teacher - avg rank: 70.30
+70. cheremsha - avg rank: 71.11
+71. Руслан - avg rank: 71.20
+72. Dima! - avg rank: 72.65
+73. Jeereky - avg rank: 73.07
+74. ustayonmymind - avg rank: 74.36
+75. duy27 - avg rank: 74.45
+76. GodЗИЛLa - avg rank: 74.89
+77. Добросердечный - avg rank: 75.12
+78. Пиковая Дама - avg rank: 75.81
+79. OlgaaGeorgieva - avg rank: 75.92
+80. Kanti - avg rank: 76.30
+81. TryFraiz - avg rank: 76.83
+82. MAKKSMIR - avg rank: 76.92
+83. Bushido - avg rank: 77.05
+84. Николай К - avg rank: 77.15
+85. Горыныч - avg rank: 77.40
+86. Rik_dds - avg rank: 77.48
+87. Абеляр - avg rank: 78.69
+88. Лабуба - avg rank: 79.11
+89. Кубус - avg rank: 79.74
+90. Holmes - avg rank: 80.66
+91. Чучел - avg rank: 80.69
+92. Hotmandog - avg rank: 81.18
+93. srgzorge - avg rank: 81.27
+94. Billie - avg rank: 81.34
+95. willy </3 - avg rank: 82.04
+96. Chimedaschool1 - avg rank: 82.40
+97. Татьяна Юрьевна Р. - avg rank: 82.56
+98. Викусик - avg rank: 82.74
+99. Dim - avg rank: 82.89
+100. Manhattan - avg rank: 83.13
