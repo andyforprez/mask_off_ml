@@ -1,18 +1,15 @@
 import pandas as pd
 import numpy as np
 
-TOURNAMENT_TYPES = {
-    'double rating points',
-    'high roller',
-    'deep classic',
-    'bounty',
-    'triple shot'
-}
+from conversion import TOURNAMENT_METADATA, add_tournament_metadata_columns, normalize_tournament_type
+
+TOURNAMENT_TYPES = set(TOURNAMENT_METADATA)
 
 
 def preprocess(df):
     df = df.copy()
     df['date'] = pd.to_datetime(df['date'])
+    df['tournament_type'] = df['tournament_type'].map(normalize_tournament_type)
     df = df.sort_values(['player_id', 'date'])
     return df
 
@@ -45,7 +42,7 @@ def add_time_features(df):
     return df
 
 def add_tournament_features(df):
-    df = df.copy()
+    df = add_tournament_metadata_columns(df)
 
     dummies = pd.get_dummies(df['tournament_type'], prefix='tt')
     df = pd.concat([df, dummies], axis=1)
@@ -94,8 +91,27 @@ def add_rank_features(df):
     df = df.copy()
 
     df['rank'] = df.groupby('date')['points'].rank(ascending=False)
+    df['field_size'] = df.groupby('date')['player_id'].transform('count')
+    if 'position' in df.columns:
+        df['finish_position'] = df['position'].astype(float)
+    else:
+        df['finish_position'] = df['rank'].astype(float)
+    df['normalized_finish'] = df['finish_position'] / df['field_size'].clip(lower=1)
+    df['top_30_bubble_distance'] = df['finish_position'] - 30
+    df['near_top_30_bubble'] = df['top_30_bubble_distance'].abs().le(5).astype(int)
+    df['made_top_30'] = df['finish_position'].le(30).astype(int)
+    df['bubble_points'] = np.where(
+        df['top_30_bubble_distance'].between(-5, 5),
+        df['points'],
+        0,
+    )
     df['rolling_rank_5'] = df.groupby('player_id')['rank'].transform(lambda x: x.shift(1).rolling(5).mean())
-
+    df['rolling_finish_5'] = df.groupby('player_id')['finish_position'].transform(
+        lambda x: x.shift(1).rolling(5).mean())
+    df['rolling_top_30_rate_10'] = df.groupby('player_id')['made_top_30'].transform(
+        lambda x: x.shift(1).rolling(10).mean())
+    df['rolling_bubble_points_10'] = df.groupby('player_id')['bubble_points'].transform(
+        lambda x: x.shift(1).rolling(10).mean())
     return df
 
 def add_activity_features(df):
@@ -147,6 +163,14 @@ def build_features(df):
     return df
 
 def get_feature_columns(df):
-    exclude = ['player_id', 'date', 'points', 'tournament_type']
+    exclude = {
+        'player_id', 'date', 'points', 'tournament_type',
+        # Raw/result columns from the same event would leak the answer into the
+        # training target. Keep their shifted/rolling derivatives instead.
+        'position', 'bounties', 'old_points', 'placement_points', 'bounty_points',
+        'gets_rating_points', 'rank', 'finish_position', 'normalized_finish',
+        'top_30_bubble_distance', 'near_top_30_bubble', 'made_top_30',
+        'bubble_points', 'field_mean', 'field_std', 'relative_score', 'positive',
+    }
     return [col for col in df.columns if col not in exclude]
 

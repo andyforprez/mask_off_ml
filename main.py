@@ -1,9 +1,10 @@
 import pandas as pd
 import os
 
+from conversion import convert_legacy_points
 from features import build_features, get_feature_columns
 from model import train_model
-from reports import save_rankings, save_averages
+from reports import save_rankings, save_averages, save_player_profiles
 from schedule_maker import build_calendar
 from pipeline import (
     run_simulations,
@@ -80,7 +81,7 @@ if not os.path.exists(RAW_PATH) or os.path.getsize(RAW_PATH) == 0:
         f.write("No games played yet.\n")
     with open('data/expected_final_ranking.txt', 'w', encoding='utf-8') as f:
         f.write("No simulations yet.\n")
-
+    pd.DataFrame(columns=['player_id', 'bubble_score']).to_csv('data/player_profiles.csv', index=False)
     print("Initialized empty season files.")
     raise SystemExit(0)
 
@@ -98,15 +99,17 @@ if df.empty:
         f.write("No games played yet.\n")
     with open('data/expected_final_ranking.txt', 'w', encoding='utf-8') as f:
         f.write("No simulations yet.\n")
-
+    pd.DataFrame(columns=['player_id', 'bubble_score']).to_csv('data/player_profiles.csv', index=False)
     raise SystemExit(0)
 
+df = convert_legacy_points(df)
 df['date'] = pd.to_datetime(df['date'])
 today = df['date'].max()
 
 # 1) Leaderboard files
 save_rankings(df, today)
 save_averages(df)
+save_player_profiles(df)
 
 # 2) Train model
 print("\n── Training model ──")

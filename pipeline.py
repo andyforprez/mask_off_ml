@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import warnings
+from conversion import build_bounty_expectations, sample_bounty_bonus, score_ranked_players
 from features import build_features, get_feature_columns
 
 
