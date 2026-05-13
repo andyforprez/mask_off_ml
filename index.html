@@ -405,7 +405,7 @@
   </div>
   <div class="stat-cell">
     <div class="stat-label">Playoff Spots</div>
-    <div class="stat-value" id="statCutoff">18</div>
+    <div class="stat-value" id="statCutoff">24</div>
   </div>
   <div class="stat-cell">
     <div class="stat-label">Last Game</div>
@@ -541,7 +541,7 @@ function findProbKey(row) {
 }
 
 let allPlayers = [];
-let playoffCutoff = 18;
+let playoffCutoff = 24;
 
 function render(players) {
   const list = document.getElementById('playerList');
@@ -609,7 +609,7 @@ async function loadData() {
     // Infer cutoff from header if possible (Top 19 Prob -> 19)
     const normProbHeader = normalizeKey(probKey);
     const cutoffMatch = normProbHeader.match(/Top\s+(\d+)\s+Prob/i);
-    playoffCutoff = cutoffMatch ? parseInt(cutoffMatch[1], 10) : 19; // fallback if using "cutoff_prob"
+    playoffCutoff = cutoffMatch ? parseInt(cutoffMatch[1], 10) : 24; // fallback if using "cutoff_prob"
 
     // Optional dynamic labels if these IDs exist in your HTML
     const statCutoffEl = document.getElementById('statCutoff');
